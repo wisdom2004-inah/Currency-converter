@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Currency Converter — NGN · USD · GBP</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Keep numbers aligned smoothly as values change */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Hide default select arrow so custom chevron aligns cleanly */
+    select.clean-select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    /* Smooth one-turn spin animation for refresh button */
+    @keyframes spinOnce {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spin-once {
+      animation: spinOnce 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex items-center justify-center p-4">
+
+  <!-- Centered White Converter Card -->
+  <main class="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-200/80 p-6 sm:p-8">
+
+    <!-- Clean App Header -->
+    <header class="mb-6 text-center">
+      <div class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+        Currency Converter
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
+        Nigeria · United States · United Kingdom
+      </p>
+    </header>
+
+    <!-- Amount Input Field -->
+    <div class="mb-5">
+      <label for="amountInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+        Amount
+      </label>
+      <div class="flex items-center rounded-2xl bg-slate-50 border-2 border-slate-200 focus-within:border-emerald-600 focus-within:bg-white transition-all px-4 py-3.5">
+        <span
+          id="activeSymbol"
+          class="text-2xl font-bold text-slate-400 select-none mr-2.5 tabular-nums"
+        >$</span>
+        <input
+          id="amountInput"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          value="100"
+          placeholder="0.00"
+          aria-label="Amount to convert"
+          class="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-slate-900 placeholder-slate-300 focus:outline-none tabular-nums"
+        />
+      </div>
+    </div>
+
+    <!-- From / Swap / To Selectors -->
+    <div class="space-y-3 mb-6">
+      <!-- From Currency Dropdown -->
+      <div>
+        <label for="fromCurrency" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+          From
+        </label>
+        <div class="relative">
+          <select
+            id="fromCurrency"
+            aria-label="From currency"
+            class="clean-select w-full rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 focus:border-emerald-600 focus:bg-white focus:outline-none px-4 py-3.5 pr-10 text-sm sm:text-base font-semibold text-slate-800 transition cursor-pointer"
+          ></select>
+          <div class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Circular Swap Button -->
+      <div class="flex justify-center py-0.5">
+        <button
+          id="swapBtn"
+          type="button"
+          aria-label="Swap currencies"
+          title="Swap currencies"
+          class="w-11 h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center transition focus:outline-none focus:ring-4 focus:ring-emerald-500/25"
+        >
+          <svg
+            id="swapIcon"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 transition-transform duration-300 ease-out"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M7 4v16" />
+            <path d="m3 8 4-4 4 4" />
+            <path d="M17 20V4" />
+            <path d="m21 16-4 4-4-4" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- To Currency Dropdown -->
+      <div>
+        <label for="toCurrency" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+          To
+        </label>
+        <div class="relative">
+          <select
+            id="toCurrency"
+            aria-label="To currency"
+            class="clean-select w-full rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 focus:border-emerald-600 focus:bg-white focus:outline-none px-4 py-3.5 pr-10 text-sm sm:text-base font-semibold text-slate-800 transition cursor-pointer"
+          ></select>
+          <div class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prominent Converted Amount Display Card -->
+    <div class="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+      <p id="fromSummary" class="text-xs sm:text-sm font-medium text-slate-400 tabular-nums">
+        100.00 USD =
+      </p>
+      <div class="mt-1.5 flex items-baseline gap-2 flex-wrap">
+        <span
+          id="convertedResult"
+          class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white tabular-nums break-all"
+        >
+          ₦155,000.00
+        </span>
+        <span
+          id="toCodeBadge"
+          class="text-sm sm:text-base font-bold text-emerald-400"
+        >
+          NGN
+        </span>
+      </div>
+    </div>
+
+    <!-- Subtle Live Exchange Rate Line & Refresh Button -->
+    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span
+          id="rateStatusDot"
+          class="w-2 h-2 rounded-full bg-amber-400 shrink-0"
+          title="Exchange rate status"
+        ></span>
+        <span
+          id="exchangeRateLine"
+          class="text-xs sm:text-sm font-medium text-slate-600 tabular-nums truncate"
+        >
+          1 USD = 1,550.00 NGN
+        </span>
+      </div>
+
+      <button
+        id="refreshBtn"
+        type="button"
+        aria-label="Refresh exchange rates"
+        title="Refresh exchange rates"
+        class="p-2.5 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-slate-100 active:scale-95 transition shrink-0"
+      >
+        <svg
+          id="refreshIcon"
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+          <path d="M16 16h5v5" />
+        </svg>
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Supported countries and currencies (Nigeria, United States, United Kingdom)
+      const CURRENCIES = {
+        NGN: {
+          country: 'Nigeria',
+          name: 'Nigerian Naira',
+          symbol: '₦',
+          flag: '🇳🇬',
+          fallback: 1550
+        },
+        USD: {
+          country: 'United States',
+          name: 'US Dollar',
+          symbol: '$',
+          flag: '🇺🇸',
+          fallback: 1
+        },
+        GBP: {
+          country: 'United Kingdom',
+          name: 'British Pound',
+          symbol: '£',
+          flag: '🇬🇧',
+          fallback: 0.79
+        }
+      };
+
+      const CURRENCY_CODES = ['NGN', 'USD', 'GBP'];
+      const API_URL = 'https://open.er-api.com/v6/latest/USD';
+
+      // Application state (defaults: 100 USD -> NGN)
+      const state = {
+        amount: 100,
+        from: 'USD',
+        to: 'NGN',
+        rates: {
+          USD: 1,
+          NGN: 1550,
+          GBP: 0.79
+        },
+        swapRotation: 0
+      };
+
+      // Cache DOM elements
+      const els = {
+        amountInput: document.getElementById('amountInput'),
+        activeSymbol: document.getElementById('activeSymbol'),
+        fromSelect: document.getElementById('fromCurrency'),
+        toSelect: document.getElementById('toCurrency'),
+        swapBtn: document.getElementById('swapBtn'),
+        swapIcon: document.getElementById('swapIcon'),
+        fromSummary: document.getElementById('fromSummary'),
+        convertedResult: document.getElementById('convertedResult'),
+        toCodeBadge: document.getElementById('toCodeBadge'),
+        rateStatusDot: document.getElementById('rateStatusDot'),
+        exchangeRateLine: document.getElementById('exchangeRateLine'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        refreshIcon: document.getElementById('refreshIcon')
+      };
+
+      // Populate select dropdowns with flag emoji, country name, and currency code
+      function populateDropdowns() {
+        const renderOptions = (selectedCode) =>
+          CURRENCY_CODES.map((code) => {
+            const item = CURRENCIES[code];
+            const selected = code === selectedCode ? 'selected' : '';
+            return `<option value="${code}" ${selected}>${item.flag} ${item.country} (${code})</option>`;
+          }).join('');
+
+        els.fromSelect.innerHTML = renderOptions(state.from);
+        els.toSelect.innerHTML = renderOptions(state.to);
+      }
+
+      // Format monetary amounts cleanly with commas and 2 decimal places
+      function formatMoney(value) {
+        if (!Number.isFinite(value)) return '0.00';
+        return new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      // Format exchange rate clearly (avoids showing 0.00 for small NGN -> USD/GBP rates)
+      function formatExchangeRate(rate) {
+        if (!Number.isFinite(rate) || rate <= 0) return '0.00';
+        if (rate >= 0.01) {
+          return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }).format(rate);
+        }
+        return rate.toFixed(4);
+      }
+
+      // Sanitize user input to allow valid decimal numbers only
+      function sanitizeNumericInput(rawValue) {
+        let cleaned = rawValue.replace(/[^0-9.]/g, '');
+        const firstDot = cleaned.indexOf('.');
+        if (firstDot !== -1) {
+          cleaned =
+            cleaned.slice(0, firstDot + 1) +
+            cleaned.slice(firstDot + 1).replace(/\./g, '');
+        }
+        return cleaned;
+      }
+
+      // Calculate cross rate and update UI
+      function updateConversion() {
+        const fromInfo = CURRENCIES[state.from];
+        const toInfo = CURRENCIES[state.to];
+        const safeAmount = Number.isFinite(state.amount) && state.amount >= 0 ? state.amount : 0;
+
+        // Calculate rate using USD as base
+        const rate = state.rates[state.to] / state.rates[state.from];
+        const converted = safeAmount * rate;
+
+        // Update input symbol & result display
+        els.activeSymbol.textContent = fromInfo.symbol;
+        els.fromSummary.textContent = `${formatMoney(safeAmount)} ${state.from} =`;
+        els.convertedResult.textContent = `${toInfo.symbol}${formatMoney(converted)}`;
+        els.toCodeBadge.textContent = state.to;
+        els.exchangeRateLine.textContent = `1 ${state.from} = ${formatExchangeRate(rate)} ${state.to}`;
+      }
+
+      // Fetch live rates from open.er-api.com with silent fallback support
+      async function fetchLiveRates() {
+        els.rateStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0';
+
+        // Trigger spin animation on refresh icon
+        els.refreshIcon.classList.remove('spin-once');
+        void els.refreshIcon.offsetWidth;
+        els.refreshIcon.classList.add('spin-once');
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+        try {
+          const response = await fetch(API_URL, {
+            signal: controller.signal,
+            cache: 'no-store'
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error('Network response failed');
+          }
+
+          const data = await response.json();
+          if (data && data.result === 'success' && data.rates) {
+            CURRENCY_CODES.forEach((code) => {
+              if (typeof data.rates[code] === 'number' && data.rates[code] > 0) {
+                state.rates[code] = data.rates[code];
+              }
+            });
+            els.rateStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 shrink-0';
+            els.rateStatusDot.title = 'Live exchange rate';
+            updateConversion();
+          } else {
+            throw new Error('Invalid rate data');
+          }
+        } catch (err) {
+          clearTimeout(timeoutId);
+          // Keep clean fallback rates so offline usage works seamlessly
+          els.rateStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+          els.rateStatusDot.title = 'Offline fallback rate';
+          updateConversion();
+        }
+      }
+
+      // Event Listeners
+      els.amountInput.addEventListener('input', (e) => {
+        const cleaned = sanitizeNumericInput(e.target.value);
+        if (e.target.value !== cleaned) {
+          e.target.value = cleaned;
+        }
+        state.amount = cleaned === '' ? 0 : parseFloat(cleaned);
+        updateConversion();
+      });
+
+      els.fromSelect.addEventListener('change', (e) => {
+        state.from = e.target.value;
+        updateConversion();
+      });
+
+      els.toSelect.addEventListener('change', (e) => {
+        state.to = e.target.value;
+        updateConversion();
+      });
+
+      els.swapBtn.addEventListener('click', () => {
+        state.swapRotation += 180;
+        els.swapIcon.style.transform = `rotate(${state.swapRotation}deg)`;
+
+        const previousFrom = state.from;
+        state.from = state.to;
+        state.to = previousFrom;
+
+        els.fromSelect.value = state.from;
+        els.toSelect.value = state.to;
+        updateConversion();
+      });
+
+      els.refreshBtn.addEventListener('click', fetchLiveRates);
+
+      // Initialize app
+      populateDropdowns();
+      updateConversion();
+      fetchLiveRates();
+    })();
+  </script>
+</body>
+</html>
